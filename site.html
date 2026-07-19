@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Samartha Gamana — Infra Developers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;500;600;700;800;900&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --basalt:#0B0E13;
+  --basalt-soft:#12161d;
+  --basalt-soft-2:#171c24;
+  --paper:#EDE9DF;
+  --paper-ink:#14181f;
+  --paper-line: rgba(20,24,31,0.14);
+  --ink:#EDEAE1;
+  --ink-dim: rgba(237,234,225,0.62);
+  --ink-dimmer: rgba(237,234,225,0.34);
+  --sandstone:#C9A176;
+  --brass:#B98F4B;
+  --brass-bright:#E0B472;
+  --blueprint:#6C93B8;
+  --line: rgba(237,234,225,0.14);
+  --paper-ink-dim:#5b5546;
+  --container: min(1360px, 92vw);
+  --pad-y: clamp(5rem, 11vw, 9.5rem);
+  --ease-out: cubic-bezier(.16,.84,.44,1);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+body{
+  margin:0;
+  background:var(--basalt);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-weight:400;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;background:none;border:none;color:inherit;cursor:pointer;}
+a[href], .parcel-card, .btn-magnetic, .faq__q, #back-to-top{ cursor:pointer; }
+::selection{ background:var(--brass); color:var(--basalt); }
+::-webkit-scrollbar{ width:9px; }
+::-webkit-scrollbar-track{ background:var(--basalt); }
+::-webkit-scrollbar-thumb{ background:#333c48; border-radius:0; }
+.container{ width:var(--container); margin:0 auto; }
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--brass);
+  display:inline-flex;
+  align-items:center;
+  gap:.6em;
+}
+.eyebrow::before{ content:""; width:22px; height:1px; background:var(--brass); display:inline-block; }
+.chapter{ position:relative; padding:var(--pad-y) 0; z-index:1; background:transparent; }
+.chapter--solid{ background:var(--basalt-soft); }
+.chapter--mid{ background:var(--basalt-soft-2); }
+.chapter--light{ background:var(--paper); color:var(--paper-ink); }
+.chapter--light .eyebrow{ color:#8a6a34; }
+.chapter--light .eyebrow::before{ background:#8a6a34; }
+.split-word{ display:inline-block; overflow:hidden; vertical-align:top; }
+.split-word > span{ display:inline-block; will-change:transform; }
+
+/* ============ ROUTE PROGRESS (the "journey") ============ */
+#route-track{
+  position:fixed; right:30px; top:50%; transform:translateY(-50%);
+  height:38vh; width:1px; z-index:500;
+  background-image:repeating-linear-gradient(to bottom, rgba(237,234,225,.28) 0 6px, transparent 6px 13px);
+}
+#route-marker{
+  position:absolute; left:50%; top:0%; width:9px; height:9px;
+  background:var(--brass-bright); transform:translate(-50%,-50%) rotate(45deg);
+  box-shadow:0 0 12px rgba(224,180,114,.8);
+}
+.route-label{
+  position:absolute; left:50%; transform:translateX(-50%);
+  font-family:'IBM Plex Mono',monospace; font-size:.62rem; letter-spacing:.18em;
+  color:var(--ink-dimmer); white-space:nowrap;
+  writing-mode:vertical-rl;
+}
+.route-label--top{ top:-58px; }
+.route-label--bottom{ bottom:-64px; }
+@media (max-width:900px){ #route-track{ display:none; } }
+
+/* ============ LOADER ============ */
+#loader{
+  position:fixed; inset:0; z-index:10000; background:var(--basalt);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+#intro-canvas{ position:absolute; inset:0; width:100%; height:100%; }
+#loader-caption{
+  position:absolute; bottom:44px; left:50%; transform:translateX(-50%);
+  font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink-dimmer);
+  display:flex; align-items:center; gap:.9em; white-space:nowrap;
+}
+#loader-caption::before{ content:""; width:6px; height:6px; background:var(--brass-bright); transform:rotate(45deg); box-shadow:0 0 10px rgba(224,180,114,.8); flex:none; }
+#loader-progress{ color:var(--brass-bright); font-variant-numeric:tabular-nums; min-width:3.4em; display:inline-block; }
+#loader-bar-track{
+  position:absolute; left:50%; bottom:78px; transform:translateX(-50%);
+  width:min(280px, 60vw); height:1px; background:var(--line);
+}
+#loader-bar-fill{ height:100%; width:0%; background:var(--brass-bright); box-shadow:0 0 8px rgba(224,180,114,.7); transition:width .25s var(--ease-out); }
+#skip-intro{
+  position:absolute; bottom:40px; right:40px;
+  font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-dim);
+  border:1px solid var(--line); padding:.75em 1.2em;
+  opacity:0; pointer-events:none; transition:opacity .5s, border-color .3s, color .3s;
+}
+#skip-intro.show{ opacity:1; pointer-events:auto; }
+#skip-intro:hover{ color:var(--brass-bright); border-color:var(--brass); }
+body.loading{ overflow:hidden; height:100vh; }
+
+/* ============ SCENE CANVAS ============ */
+#scene-canvas{ position:fixed; inset:0; z-index:0; width:100%; height:100%; }
+
+/* ============ NAV ============ */
+#site-nav{
+  position:fixed; top:0; left:0; right:0; z-index:900;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:26px clamp(20px,4vw,48px);
+  transition:background .4s, padding .4s, backdrop-filter .4s, border-color .4s;
+  border-bottom:1px solid transparent;
+}
+#site-nav.scrolled{
+  background:rgba(11,14,19,.78); backdrop-filter:blur(10px);
+  padding:16px clamp(20px,4vw,48px); border-bottom-color:var(--line);
+}
+.nav__brand{ display:flex; align-items:center; gap:10px; }
+.nav__mark{ color:var(--brass-bright); width:20px; height:20px; }
+.nav__word{ font-family:'IBM Plex Mono',monospace; font-size:.74rem; letter-spacing:.16em; text-transform:uppercase; }
+.nav__links{ display:flex; gap:clamp(20px,3vw,44px); align-items:center; }
+.nav__link{
+  font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-dim); position:relative; padding:4px 0;
+}
+.nav__link::after{ content:""; position:absolute; left:0; bottom:0; width:0; height:1px; background:var(--brass-bright); transition:width .3s var(--ease-out); }
+.nav__link:hover{ color:var(--ink); }
+.nav__link:hover::after{ width:100%; }
+.nav__cta{
+  font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  border:1px solid var(--line); padding:.7em 1.3em; color:var(--ink);
+  transition:border-color .3s, color .3s, background .3s;
+}
+.nav__cta:hover{ border-color:var(--brass); color:var(--brass-bright); background:rgba(185,143,75,.08); }
+.nav__toggle{ display:none; }
+@media (max-width:820px){
+  .nav__links{
+    position:fixed; inset:0 0 0 auto; width:78%; max-width:320px; height:100vh;
+    background:var(--basalt-soft); flex-direction:column; justify-content:center; align-items:flex-start;
+    padding:0 40px; gap:28px; transform:translateX(100%); transition:transform .5s var(--ease-out); z-index:950;
+  }
+  .nav__links.open{ transform:translateX(0); }
+  .nav__toggle{ display:block; z-index:960; width:26px; height:18px; position:relative; }
+  .nav__toggle span{ position:absolute; left:0; right:0; height:1px; background:var(--ink); transition:transform .3s,opacity .3s; }
+  .nav__toggle span:nth-child(1){ top:0; }
+  .nav__toggle span:nth-child(2){ top:8px; }
+  .nav__toggle span:nth-child(3){ top:16px; }
+  .nav__toggle.open span:nth-child(1){ transform:translateY(8px) rotate(45deg); }
+  .nav__toggle.open span:nth-child(2){ opacity:0; }
+  .nav__toggle.open span:nth-child(3){ transform:translateY(-8px) rotate(-45deg); }
+}
+
+/* ============ HERO ============ */
+#hero{
+  min-height:100svh; display:flex; flex-direction:column; justify-content:center;
+  position:relative; padding:0 clamp(20px,4vw,48px);
+}
+.hero__inner{ width:var(--container); margin:0 auto; }
+.hero__eyebrow{ margin-bottom:1.6em; }
+.hero__title{
+  font-family:'Big Shoulders Display',sans-serif; font-weight:900; text-transform:uppercase;
+  line-height:.82; letter-spacing:-.01em; margin:0;
+}
+.hero__title .line-small{
+  display:block; font-size:clamp(1.1rem,2.6vw,1.8rem); font-weight:600; letter-spacing:.06em; color:var(--ink-dim); margin-bottom:.3em;
+}
+.hero__title .line-big{
+  display:block; font-size:clamp(4rem,15vw,12.5rem);
+  background:linear-gradient(100deg, var(--ink) 20%, var(--brass-bright) 50%, var(--ink) 80%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.hero__sub{ font-family:'Fraunces',serif; font-style:italic; font-weight:400; font-size:clamp(1.1rem,2.2vw,1.55rem); color:var(--ink-dim); margin:.9em 0 0; max-width:26em; }
+.hero__scroll{
+  position:absolute; left:clamp(20px,4vw,48px); bottom:40px;
+  display:flex; align-items:center; gap:14px;
+  font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-dimmer);
+}
+.hero__scroll-line{ width:1px; height:44px; background:linear-gradient(to bottom, var(--brass-bright), transparent); position:relative; overflow:hidden; }
+.hero__scroll-line::after{ content:""; position:absolute; left:0; top:-100%; width:100%; height:100%; background:var(--brass-bright); animation:scrollrun 1.8s ease-in-out infinite; }
+@keyframes scrollrun{ 0%{top:-100%;} 60%{top:100%;} 100%{top:100%;} }
+
+/* ============ ORIGIN (blueprint) ============ */
+#chapter-origin{ min-height:90vh; display:flex; align-items:center; }
+.origin__grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(30px,6vw,90px); align-items:center; }
+.origin__title{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(2rem,4.4vw,3.4rem); line-height:1.12; margin:.4em 0 .5em; }
+.origin__title em{ font-style:italic; color:var(--brass-bright); }
+.origin__text p{ font-size:1.02rem; line-height:1.75; color:var(--ink-dim); max-width:32em; margin:0; }
+.origin__diagram{ width:100%; height:auto; color:var(--blueprint); }
+.origin__diagram .grid-line{ stroke:rgba(108,147,184,.28); stroke-width:1; }
+.origin__diagram .tower{ fill:none; stroke:var(--brass-bright); stroke-width:1.4; }
+@media (max-width:900px){ .origin__grid{ grid-template-columns:1fr; } .origin__diagram{ order:-1; max-width:340px; margin:0 auto 20px; } }
+
+/* ============ PARCELS ============ */
+.chapter-head{ margin-bottom:clamp(2.4rem,5vw,4rem); max-width:40em; }
+.chapter-head h2{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(2rem,4.6vw,3.6rem); line-height:1.08; margin:.35em 0 0; }
+.parcels__grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:var(--line); border:1px solid var(--line);
+}
+.parcel-card{
+  background:var(--basalt-soft); padding:2.6rem 2rem; position:relative; overflow:hidden;
+  transform-style:preserve-3d; transition:background .4s;
+}
+.parcel-card:hover{ background:var(--basalt-soft-2); }
+.parcel-card__top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.4rem; }
+.parcel-card__coord{ font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.14em; color:var(--ink-dimmer); }
+.parcel-card__num{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:2.2rem; color:var(--ink-dimmer); line-height:1; }
+.parcel-card__icon{ width:38px; height:38px; color:var(--brass); margin-bottom:1.4rem; transition:color .3s; }
+.parcel-card:hover .parcel-card__icon{ color:var(--brass-bright); }
+.parcel-card__title{ font-family:'Fraunces',serif; font-weight:500; font-size:1.4rem; margin:0 0 .55em; }
+.parcel-card__desc{ font-size:.92rem; line-height:1.6; color:var(--ink-dim); margin:0; }
+@media (max-width:900px){ .parcels__grid{ grid-template-columns:1fr; } }
+
+/* ============ SCALE / STATS (light) ============ */
+.stats__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(20px,3vw,40px); margin-bottom:3.5rem; }
+.stat__num{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:clamp(2.4rem,6vw,4.4rem); line-height:1; border-bottom:2px solid var(--brass); padding-bottom:.25em; display:inline-block; }
+.stat__label{ font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:#5b5546; margin-top:.8em; }
+.stats__line{ width:100%; height:auto; }
+.stats__line path{ fill:none; stroke:#8a6a34; stroke-width:1.5; stroke-dasharray:900; stroke-dashoffset:900; }
+@media (max-width:820px){ .stats__grid{ grid-template-columns:1fr 1fr; row-gap:2.2rem; } }
+
+/* ============ DEVELOPMENTS ============ */
+.dev-panel{
+  display:flex; align-items:stretch; min-height:78vh; border-bottom:1px solid var(--line);
+}
+.dev-panel--reverse{ flex-direction:row-reverse; }
+.dev-panel__media{
+  flex:1 1 55%; position:relative; overflow:hidden; clip-path:inset(0 0 0 0);
+}
+.dev-panel__media::before{ content:""; position:absolute; inset:0; background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 1px, transparent 1px 26px); }
+.dev-panel__tag{
+  position:absolute; left:22px; bottom:20px; font-family:'IBM Plex Mono',monospace; font-size:.6rem;
+  letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.75);
+  border:1px solid rgba(255,255,255,.3); padding:.5em .9em;
+}
+.dev-panel__content{ flex:1 1 45%; display:flex; flex-direction:column; justify-content:center; padding:clamp(30px,5vw,70px); }
+.dev-panel__index{ font-family:'IBM Plex Mono',monospace; color:var(--brass); font-size:.72rem; letter-spacing:.16em; margin-bottom:1.2em; }
+.dev-panel__title{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(1.8rem,3.4vw,2.6rem); margin:0 0 .5em; }
+.dev-panel__desc{ color:var(--ink-dim); line-height:1.7; max-width:30em; margin:0; }
+@media (max-width:820px){ .dev-panel,.dev-panel--reverse{ flex-direction:column; } .dev-panel__media{ min-height:44vh; } }
+
+/* ============ PROCESS ============ */
+.process__track{ display:flex; gap:0; position:relative; margin-top:2rem; }
+.process__track::before{ content:""; position:absolute; top:14px; left:0; right:0; height:1px; background-image:repeating-linear-gradient(to right, var(--line) 0 8px, transparent 8px 16px); }
+.process__step{ flex:1; padding-right:2rem; position:relative; }
+.process__node{ width:9px; height:9px; background:var(--brass-bright); transform:rotate(45deg); margin-bottom:1.6rem; box-shadow:0 0 10px rgba(224,180,114,.7); }
+.process__num{ font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--ink-dimmer); letter-spacing:.14em; }
+.process__title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:1.5rem; text-transform:uppercase; margin:.4em 0 .55em; }
+.process__desc{ font-size:.9rem; line-height:1.6; color:var(--ink-dim); max-width:22em; }
+@media (max-width:820px){
+  .process__track{ flex-direction:column; gap:2.4rem; }
+  .process__track::before{ top:0; bottom:0; left:14px; right:auto; width:1px; height:auto; background-image:repeating-linear-gradient(to bottom, var(--line) 0 8px, transparent 8px 16px); }
+  .process__step{ padding-left:34px; padding-right:0; }
+  .process__node{ position:absolute; left:10px; top:2px; }
+}
+
+/* ============ CTA ============ */
+#chapter-cta{ position:relative; text-align:center; overflow:hidden; }
+#chapter-cta::before{
+  content:""; position:absolute; left:50%; top:20%; width:900px; height:900px; transform:translate(-50%,-30%);
+  background:radial-gradient(circle, rgba(185,143,75,.16), transparent 60%); pointer-events:none;
+}
+.cta__headline{ font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:clamp(2.2rem,6vw,4.6rem); line-height:1.12; max-width:18em; margin:0 auto .5em; position:relative; }
+.cta__sub{ color:var(--ink-dim); font-size:1.05rem; margin:0 auto 2.6rem; max-width:30em; position:relative; }
+.btn-magnetic{
+  display:inline-flex; align-items:center; gap:.8em; background:var(--brass-bright); color:var(--basalt);
+  font-family:'IBM Plex Mono',monospace; font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:1.15em 2.1em; border-radius:999px; position:relative;
+}
+.contact-grid{ display:flex; justify-content:center; gap:clamp(24px,5vw,64px); margin-top:4.5rem; flex-wrap:wrap; position:relative; }
+.contact-row{ text-align:left; }
+.contact-row__label{ font-family:'IBM Plex Mono',monospace; font-size:.62rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-dimmer); display:block; margin-bottom:.5em; }
+.contact-row__value{ font-family:'Fraunces',serif; font-size:1.15rem; }
+
+/* ============ SKYLINE (3D showcase) ============ */
+#chapter-skyline{ min-height:100vh; display:flex; align-items:center; }
+.skyline__inner{ max-width:34em; }
+.skyline__title{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(2rem,4.4vw,3.4rem); line-height:1.12; margin:.4em 0 .5em; }
+.skyline__title em{ font-style:italic; color:var(--brass-bright); }
+.skyline__inner > p{ font-size:1.02rem; line-height:1.75; color:var(--ink-dim); max-width:32em; margin:0 0 2.6rem; }
+.skyline__chips{ display:flex; gap:clamp(24px,5vw,56px); flex-wrap:wrap; }
+.skyline__chip-num{ display:block; font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:clamp(1.8rem,3.6vw,2.6rem); color:var(--brass-bright); line-height:1; }
+.skyline__chip-label{ font-family:'IBM Plex Mono',monospace; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-dimmer); margin-top:.5em; display:block; }
+@media (max-width:820px){ #chapter-skyline{ min-height:78vh; } }
+
+/* ============ APPROACH ============ */
+.approach__list{ margin-top:1rem; }
+.approach__row{
+  display:grid; grid-template-columns:5rem 1fr; gap:clamp(20px,4vw,50px);
+  padding:clamp(1.6rem,3vw,2.6rem) 0; border-top:1px solid var(--line);
+}
+.approach__row:last-child{ border-bottom:1px solid var(--line); }
+.approach__index{ font-family:'Fraunces',serif; font-style:italic; font-size:clamp(1.6rem,3vw,2.2rem); color:var(--brass); }
+.approach__body h3{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:.01em; font-size:clamp(1.2rem,2.2vw,1.6rem); margin:0 0 .5em; }
+.approach__body p{ font-size:.96rem; line-height:1.7; color:var(--ink-dim); max-width:36em; margin:0; }
+@media (max-width:640px){ .approach__row{ grid-template-columns:1fr; gap:.6rem; } }
+
+/* ============ SUSTAINABILITY ============ */
+.sustain__grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(30px,6vw,80px); align-items:start; }
+.sustain__intro p{ font-size:1.02rem; line-height:1.75; max-width:30em; margin:0; color:var(--paper-ink-dim); }
+.sustain__checklist{ display:flex; flex-direction:column; gap:1.7rem; }
+.sustain__item{ display:flex; gap:1.1rem; align-items:flex-start; }
+.sustain__item svg{ width:30px; height:30px; flex:none; color:#8a6a34; margin-top:.1em; }
+.sustain__item h4{ font-family:'Fraunces',serif; font-weight:500; font-size:1.08rem; margin:0 0 .3em; }
+.sustain__item p{ font-size:.9rem; line-height:1.6; color:var(--paper-ink-dim); margin:0; max-width:28em; }
+@media (max-width:900px){ .sustain__grid{ grid-template-columns:1fr; gap:2.4rem; } }
+
+/* ============ TESTIMONIALS ============ */
+.testimonial__grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(28px,4vw,44px); }
+.testimonial-card{ display:flex; flex-direction:column; gap:1.3rem; }
+.testimonial-card__mark{ font-family:'Fraunces',serif; font-style:italic; font-size:3rem; line-height:1; color:#8a6a34; }
+.testimonial-card__quote{ font-family:'Fraunces',serif; font-size:1.08rem; line-height:1.62; margin:0; }
+.testimonial-card__byline{ font-family:'IBM Plex Mono',monospace; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--paper-ink-dim); }
+@media (max-width:900px){ .testimonial__grid{ grid-template-columns:1fr; gap:2.6rem; } }
+
+/* ============ LEADERSHIP ============ */
+.team__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+.team-card{ background:var(--basalt-soft); padding:2.2rem 1.8rem; }
+.team-card__badge{
+  width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:1.05rem; color:var(--brass-bright);
+  border:1px solid var(--brass); margin-bottom:1.5rem;
+}
+.team-card__name{ font-family:'Fraunces',serif; font-weight:500; font-size:1.14rem; margin:0 0 .2em; }
+.team-card__role{ font-family:'IBM Plex Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); margin-bottom:.9em; display:block; }
+.team-card__desc{ font-size:.86rem; line-height:1.6; color:var(--ink-dim); margin:0; }
+@media (max-width:900px){ .team__grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .team__grid{ grid-template-columns:1fr; } }
+
+/* ============ FAQ ============ */
+.faq__list{ max-width:46em; }
+.faq__item{ border-bottom:1px solid var(--line); }
+.faq__q{
+  width:100%; display:flex; justify-content:space-between; align-items:center; gap:1.2rem;
+  padding:1.5rem 0; text-align:left; font-family:'Fraunces',serif; font-size:1.1rem; color:var(--ink); background:none; border:none;
+}
+.faq__q-plus{ font-family:'IBM Plex Mono',monospace; font-size:1.15rem; color:var(--brass-bright); flex:none; transition:transform .3s var(--ease-out); }
+.faq__item.open .faq__q-plus{ transform:rotate(45deg); }
+.faq__a{ max-height:0; overflow:hidden; transition:max-height .4s var(--ease-out); }
+.faq__a p{ font-size:.94rem; line-height:1.7; color:var(--ink-dim); margin:0 0 1.6rem; max-width:40em; }
+@media (max-width:600px){ .faq__q{ font-size:1rem; padding:1.2rem 0; } }
+
+/* ============ RECOGNITION ============ */
+#chapter-recognition{ padding:clamp(2.4rem,5vw,3.6rem) 0; }
+.recognition__row{ display:flex; flex-wrap:wrap; gap:0 clamp(16px,3vw,32px); align-items:center; justify-content:center; }
+.recognition__item{ font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); padding:.6em 0; position:relative; }
+.recognition__item:not(:last-child)::after{ content:"·"; margin-left:clamp(16px,3vw,32px); color:var(--ink-dimmer); }
+
+/* ============ CONTACT FORM ============ */
+.contact-form__grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(30px,6vw,80px); align-items:start; }
+.contact-form{ display:flex; flex-direction:column; gap:1.3rem; }
+.form-row{ display:flex; gap:1.2rem; flex-wrap:wrap; }
+.form-field{ flex:1 1 200px; display:flex; flex-direction:column; gap:.5em; }
+.form-field label{ font-family:'IBM Plex Mono',monospace; font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--paper-ink-dim); }
+.form-field input, .form-field textarea{
+  font-family:'Inter',sans-serif; font-size:.96rem; color:inherit; background:transparent;
+  border:none; border-bottom:1px solid var(--paper-line); padding:.7em .1em; outline:none;
+  transition:border-color .3s; width:100%;
+}
+.form-field input:focus, .form-field textarea:focus{ border-color:#8a6a34; }
+.form-field textarea{ resize:vertical; min-height:110px; font-family:inherit; }
+.contact-form button[type="submit"]{
+  align-self:flex-start; margin-top:.6rem; display:inline-flex; align-items:center; gap:.8em;
+  background:var(--paper-ink); color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:.76rem;
+  letter-spacing:.1em; text-transform:uppercase; padding:1.05em 2em; border-radius:999px;
+}
+.contact-form__note{ font-size:.8rem; color:var(--paper-ink-dim); margin:.4rem 0 0; }
+.contact-aside{ display:flex; flex-direction:column; gap:1.9rem; }
+.contact-aside__block h4{ font-family:'IBM Plex Mono',monospace; font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--paper-ink-dim); margin:0 0 .6em; }
+.contact-aside__block p{ font-family:'Fraunces',serif; font-size:1.05rem; margin:0; }
+@media (max-width:900px){ .contact-form__grid{ grid-template-columns:1fr; gap:2.4rem; } }
+
+/* ============ FOOTER ============ */
+#site-footer{ padding:2.4rem 0 2.6rem; border-top:1px solid var(--line); }
+.footer__row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.2rem; }
+.footer__stamp{ font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.14em; color:var(--ink-dimmer); text-transform:uppercase; }
+.footer__links{ display:flex; gap:24px; }
+.footer__links a{ font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); }
+.footer__links a:hover{ color:var(--brass-bright); }
+#back-to-top{
+  width:44px; height:44px; border:1px solid var(--line); border-radius:50%; display:flex; align-items:center; justify-content:center;
+}
+#back-to-top svg{ width:16px; height:16px; }
+
+@media (prefers-reduced-motion: reduce){
+  .hero__scroll-line::after{ animation:none; }
+}
+</style>
+</head>
+<body class="loading">
+
+<div id="route-track" aria-hidden="true">
+  <span class="route-label route-label--top">Departure</span>
+  <div id="route-marker"></div>
+  <span class="route-label route-label--bottom">Arrival</span>
+</div>
+
+<div id="loader">
+  <canvas id="intro-canvas"></canvas>
+  <div id="loader-bar-track"><div id="loader-bar-fill"></div></div>
+  <div id="loader-caption"><span id="loader-caption-text">Calibrating coordinates</span><span id="loader-progress">0%</span></div>
+  <button id="skip-intro">Skip intro →</button>
+</div>
+
+<canvas id="scene-canvas"></canvas>
+
+<nav id="site-nav">
+  <a href="#hero" class="nav__brand">
+    <svg class="nav__mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M2 8V2h6M22 8V2h-6M2 16v6h6M22 16v6h-6"/>
+      <path d="M12 9v6M9 12h6"/>
+    </svg>
+    <span class="nav__word">Samartha Gamana</span>
+  </a>
+  <button class="nav__toggle" id="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  <div class="nav__links" id="nav-links">
+    <a class="nav__link" href="#chapter-skyline">Skyline</a>
+    <a class="nav__link" href="#chapter-parcels">Parcels</a>
+    <a class="nav__link" href="#chapter-developments">Developments</a>
+    <a class="nav__link" href="#chapter-faq">FAQ</a>
+    <a class="nav__cta" href="#chapter-cta">Contact</a>
+  </div>
+</nav>
+
+<main>
+
+  <section id="hero">
+    <div class="hero__inner">
+      <p class="eyebrow hero__eyebrow">Samartha Gamana · Infra Developers</p>
+      <h1 class="hero__title">
+        <span class="line-small">Samartha</span>
+        <span class="line-big">Gamana</span>
+      </h1>
+      <p class="hero__sub">the journey from land to landmark.</p>
+    </div>
+    <div class="hero__scroll">
+      <span class="hero__scroll-line"></span>
+      <span>Scroll to begin</span>
+    </div>
+  </section>
+
+  <section id="chapter-origin" class="chapter">
+    <div class="container origin__grid">
+      <div class="origin__text">
+        <p class="eyebrow">Parcel 00 — Origin</p>
+        <h2 class="origin__title">Every skyline starts as a <em>straight line.</em></h2>
+        <p>Before a beam is set, a plot is measured, surveyed, and drawn to scale. That discipline — precision before ambition — is what Samartha Gamana brings to every township, tower, and road it builds. We don't chase height for its own sake. We plan movement: how people will arrive, live, work, and return, long after the drawings are filed away.</p>
+      </div>
+      <svg class="origin__diagram" viewBox="0 0 400 320" fill="none">
+        <g class="grid-line">
+          <path d="M0 40H400M0 90H400M0 140H400M0 190H400M0 240H400M0 290H400"/>
+          <path d="M40 0V320M90 0V320M140 0V320M190 0V320M240 0V320M290 0V320M340 0V320"/>
+        </g>
+        <g class="tower">
+          <rect x="70" y="130" width="60" height="160"/>
+          <rect x="160" y="80" width="60" height="210"/>
+          <rect x="250" y="160" width="60" height="130"/>
+          <path d="M70 130 100 100 130 130M160 80 190 50 220 80"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section id="chapter-skyline" class="chapter">
+    <div class="container">
+      <div class="skyline__inner">
+        <p class="eyebrow">Parcel 00.5 — The Skyline</p>
+        <h2 class="skyline__title">Every block, modelled before it's <em>poured.</em></h2>
+        <p>The massing behind this page is our own — a live block-model of how a district actually reads at street level: setbacks, rooflines, and the handful of landmark parcels that anchor a skyline long before a single foundation is dug.</p>
+        <div class="skyline__chips">
+          <div class="skyline__chip"><span class="skyline__chip-num">120+</span><span class="skyline__chip-label">Blocks modelled</span></div>
+          <div class="skyline__chip"><span class="skyline__chip-num">03</span><span class="skyline__chip-label">Landmark parcels</span></div>
+          <div class="skyline__chip"><span class="skyline__chip-num">1:1</span><span class="skyline__chip-label">Massing accuracy</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-parcels" class="chapter chapter--solid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Six disciplines, one journey</p>
+        <h2>Where Gamana operates.</h2>
+      </div>
+      <div class="parcels__grid">
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 01 / Sector TWN</span><span class="parcel-card__num">01</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 40h40M8 40V22l6-6 6 6v18M22 40V16l6-8 6 8v24M36 40V26l4-4 4 4v14"/></svg>
+          <h3 class="parcel-card__title">Townships</h3>
+          <p class="parcel-card__desc">Planned communities, laid out before the first road is cut — schools, parks, and homes sequenced to grow together, not around each other.</p>
+        </div>
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 02 / Sector RES</span><span class="parcel-card__num">02</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 24 8l18 16"/><path d="M10 22v18h28V22"/><path d="M20 40v-10h8v10"/></svg>
+          <h3 class="parcel-card__title">Residential</h3>
+          <p class="parcel-card__desc">Homes drawn around how people actually live — light, ventilation, and privacy considered at the level of a single window.</p>
+        </div>
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 03 / Sector COM</span><span class="parcel-card__num">03</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="6" width="20" height="36"/><path d="M19 14h2M27 14h2M19 21h2M27 21h2M19 28h2M27 28h2M19 35h2M27 35h2"/><path d="M6 42h36"/></svg>
+          <h3 class="parcel-card__title">Commercial</h3>
+          <p class="parcel-card__desc">Towers built for the decades a business will spend inside them, not just the year it moves in.</p>
+        </div>
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 04 / Sector RD</span><span class="parcel-card__num">04</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 42M30 6l12 36"/><path d="M24 10v4M24 18v4M24 26v4M24 34v4"/></svg>
+          <h3 class="parcel-card__title">Road Infrastructure</h3>
+          <p class="parcel-card__desc">The lines that connect every other line — arterial roads, service lanes, and drainage, engineered before anything is built around them.</p>
+        </div>
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 05 / Sector CON</span><span class="parcel-card__num">05</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 42V10M10 10l24 6M10 14l18 5"/><path d="M34 16l6 20M10 42h30"/><path d="M28 20l2 6"/></svg>
+          <h3 class="parcel-card__title">Construction</h3>
+          <p class="parcel-card__desc">Execution held to the same tolerance as the drawing — what's specified on paper is what gets poured on site.</p>
+        </div>
+
+        <div class="parcel-card">
+          <div class="parcel-card__top"><span class="parcel-card__coord">Parcel 06 / Sector LD</span><span class="parcel-card__num">06</span></div>
+          <svg class="parcel-card__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h6M8 12v6M40 12h-6M40 12v6M8 36h6M8 36v-6M40 36h-6M40 36v-6"/><path d="M8 12 40 12 40 36 8 36Z" stroke-dasharray="3 3"/></svg>
+          <h3 class="parcel-card__title">Land Development</h3>
+          <p class="parcel-card__desc">Raw acreage — surveyed, graded, and serviced — made ready to hold a future that hasn't been designed yet.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-approach" class="chapter chapter--mid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">How we hold ourselves to it</p>
+        <h2>Four things we don't compromise on.</h2>
+      </div>
+      <div class="approach__list">
+        <div class="approach__row">
+          <span class="approach__index">I</span>
+          <div class="approach__body">
+            <h3>Precision before ambition</h3>
+            <p>We survey before we imagine. Every plan is drawn against measured ground, not assumed ground — so what's promised on paper is what the site can actually hold.</p>
+          </div>
+        </div>
+        <div class="approach__row">
+          <span class="approach__index">II</span>
+          <div class="approach__body">
+            <h3>Built for decades, not launch day</h3>
+            <p>A structure is judged by its fortieth year, not its first. We specify materials and services against that timeline, not against the year it's handed over.</p>
+          </div>
+        </div>
+        <div class="approach__row">
+          <span class="approach__index">III</span>
+          <div class="approach__body">
+            <h3>Community before concrete</h3>
+            <p>Roads, schools, and green corridors are sequenced ahead of the units they serve — never bolted on afterward once the towers are already sold.</p>
+          </div>
+        </div>
+        <div class="approach__row">
+          <span class="approach__index">IV</span>
+          <div class="approach__body">
+            <h3>What's drawn is what's poured</h3>
+            <p>Site execution is held to the same tolerance as the drawing. No quiet substitutions, and no gap between the specification and the slab.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-scale" class="chapter chapter--light">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">The journey so far</p>
+        <h2>Measured in more than square feet.</h2>
+      </div>
+      <div class="stats__grid">
+        <div class="stat"><span class="stat__num" data-count="12" data-suffix="M+">0</span><span class="stat__label">Sq. ft. under development</span></div>
+        <div class="stat"><span class="stat__num" data-count="40" data-suffix="km+">0</span><span class="stat__label">Of road laid</span></div>
+        <div class="stat"><span class="stat__num" data-count="6" data-suffix="">0</span><span class="stat__label">Cities</span></div>
+        <div class="stat"><span class="stat__num" data-count="18" data-suffix="">0</span><span class="stat__label">Years on site</span></div>
+      </div>
+      <svg class="stats__line" viewBox="0 0 1000 120" preserveAspectRatio="none">
+        <path id="stats-path" d="M0 100 C 120 100, 160 40, 260 60 S 420 20, 520 40 S 700 90, 820 30 S 950 10, 1000 15"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="chapter-sustainability" class="chapter chapter--solid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Built to last, lightly</p>
+        <h2>Development that spends the site's resources carefully.</h2>
+      </div>
+      <div class="sustain__grid">
+        <div class="sustain__intro">
+          <p>Sustainability, here, isn't a certificate framed in the lobby — it's decided at the survey stage, before a single plot line is drawn. Every township carries the same baseline commitments, regardless of budget or buyer.</p>
+        </div>
+        <div class="sustain__checklist">
+          <div class="sustain__item">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6c6 8 11 14.5 11 20.5A11 11 0 1 1 13 26.5C13 20.5 18 14 24 6Z"/><path d="M18 40h12M20 44h8"/></svg>
+            <div><h4>Rainwater harvesting by design</h4><p>Site grading and recharge pits engineered into the master plan, not added after the monsoon exposes a gap.</p></div>
+          </div>
+          <div class="sustain__item">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V18M24 18C14 18 10 10 10 10s4 12 14 12ZM24 18c8 0 12-8 12-8s-4 10-12 10Z"/></svg>
+            <div><h4>Green corridors reserved first</h4><p>Tree cover and open space allocated before plot sale, so density is never traded for shade.</p></div>
+          </div>
+          <div class="sustain__item">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 40h32M12 40V24l12-10 12 10v16"/><path d="M24 6v4M14 10l2.5 2.5M34 10l-2.5 2.5"/></svg>
+            <div><h4>Solar-ready rooftops</h4><p>Structural and electrical provisioning for solar built in across every typology, whether or not it's fitted on day one.</p></div>
+          </div>
+          <div class="sustain__item">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 42h36"/><path d="M16 42c0-6 3-9 3-9s3 3 3 9M26 42c0-8 4-12 4-12s4 4 4 12"/></svg>
+            <div><h4>Native, low-water landscaping</h4><p>Planting palettes chosen for the region's actual rainfall, not for a rendering that assumes an irrigation budget.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-developments" class="chapter">
+    <div class="chapter-head container">
+      <p class="eyebrow">Selected developments</p>
+      <h2>Three ways the journey has landed.</h2>
+    </div>
+
+    <div class="dev-panel">
+      <div class="dev-panel__media" style="background:linear-gradient(135deg,#2b2f22,#5c6b3f 55%,#c9a176);">
+        <span class="dev-panel__tag">Concept render — for illustration</span>
+      </div>
+      <div class="dev-panel__content">
+        <span class="dev-panel__index">01 / Township</span>
+        <h3 class="dev-panel__title">Gamana Township</h3>
+        <p class="dev-panel__desc">A self-contained community planned for thousands of households — schools, transit, and a green corridor included by design, not as an afterthought.</p>
+      </div>
+    </div>
+
+    <div class="dev-panel dev-panel--reverse">
+      <div class="dev-panel__media" style="background:linear-gradient(135deg,#1c2530,#3e5c76 55%,#6c93b8);">
+        <span class="dev-panel__tag">Concept render — for illustration</span>
+      </div>
+      <div class="dev-panel__content">
+        <span class="dev-panel__index">02 / Commercial</span>
+        <h3 class="dev-panel__title">Samartha Business Quarter</h3>
+        <p class="dev-panel__desc">A commercial district built around a central transit spine, so the address works for the business inside it and the city around it.</p>
+      </div>
+    </div>
+
+    <div class="dev-panel">
+      <div class="dev-panel__media" style="background:linear-gradient(135deg,#2a221a,#8a6a3e 55%,#e0b472);">
+        <span class="dev-panel__tag">Concept render — for illustration</span>
+      </div>
+      <div class="dev-panel__content">
+        <span class="dev-panel__index">03 / Residential</span>
+        <h3 class="dev-panel__title">The Ridge Residences</h3>
+        <p class="dev-panel__desc">Low-rise homes stepped along a natural contour, so no unit blocks another's view — and no hillside is levelled to build them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-process" class="chapter chapter--mid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">How the journey moves</p>
+        <h2>Four stages. One straight line.</h2>
+      </div>
+      <div class="process__track">
+        <div class="process__step">
+          <div class="process__node"></div>
+          <span class="process__num">01</span>
+          <h3 class="process__title">Land</h3>
+          <p class="process__desc">Survey, title, and soil — the ground truth before any design begins.</p>
+        </div>
+        <div class="process__step">
+          <div class="process__node"></div>
+          <span class="process__num">02</span>
+          <h3 class="process__title">Design</h3>
+          <p class="process__desc">Master plan, structural drawings, and approvals, drawn to the same scale as what gets built.</p>
+        </div>
+        <div class="process__step">
+          <div class="process__node"></div>
+          <span class="process__num">03</span>
+          <h3 class="process__title">Build</h3>
+          <p class="process__desc">Construction sequenced against the drawing, not around convenience.</p>
+        </div>
+        <div class="process__step">
+          <div class="process__node"></div>
+          <span class="process__num">04</span>
+          <h3 class="process__title">Deliver</h3>
+          <p class="process__desc">Handover and documentation, ending with an actual key in an actual lock.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-testimonials" class="chapter chapter--light">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Told by the people who moved in</p>
+        <h2>Not our words about the journey.</h2>
+      </div>
+      <div class="testimonial__grid">
+        <div class="testimonial-card">
+          <span class="testimonial-card__mark">“</span>
+          <p class="testimonial-card__quote">We were shown the drainage plan before we were shown the brochure. That order of priorities is why we bought here.</p>
+          <span class="testimonial-card__byline">A. Rao — Resident, Gamana Township, Phase 2</span>
+        </div>
+        <div class="testimonial-card">
+          <span class="testimonial-card__mark">“</span>
+          <p class="testimonial-card__quote">Our lease terms assumed a transit spine that hadn't opened yet. It opened on schedule, which is rarer than it should be.</p>
+          <span class="testimonial-card__byline">N. Fernandes — Tenant, Samartha Business Quarter</span>
+        </div>
+        <div class="testimonial-card">
+          <span class="testimonial-card__mark">“</span>
+          <p class="testimonial-card__quote">No two units on our row block each other's view. On a hillside site, that's a design decision, not luck.</p>
+          <span class="testimonial-card__byline">P. Shetty — Homeowner, The Ridge Residences</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-leadership" class="chapter chapter--solid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Who signs off on the drawing</p>
+        <h2>The people holding the tolerance.</h2>
+      </div>
+      <div class="team__grid">
+        <div class="team-card">
+          <div class="team-card__badge">RI</div>
+          <h3 class="team-card__name">R. Iyengar</h3>
+          <span class="team-card__role">Managing Director</span>
+          <p class="team-card__desc">Two decades leading land-to-key delivery across six cities.</p>
+        </div>
+        <div class="team-card">
+          <div class="team-card__badge">SB</div>
+          <h3 class="team-card__name">S. Bhat</h3>
+          <span class="team-card__role">Head of Design</span>
+          <p class="team-card__desc">Master planning and structural drawing sign-off for every parcel.</p>
+        </div>
+        <div class="team-card">
+          <div class="team-card__badge">KD</div>
+          <h3 class="team-card__name">K. Devaraj</h3>
+          <span class="team-card__role">Head of Construction</span>
+          <p class="team-card__desc">Site execution held to the tolerance of the drawing, every time.</p>
+        </div>
+        <div class="team-card">
+          <div class="team-card__badge">MC</div>
+          <h3 class="team-card__name">M. Chandran</h3>
+          <span class="team-card__role">Head of Community</span>
+          <p class="team-card__desc">Township programming, resident services, and handover documentation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-faq" class="chapter chapter--mid">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Before you call</p>
+        <h2>Questions we hear on the first visit.</h2>
+      </div>
+      <div class="faq__list" id="faq-list">
+        <div class="faq__item">
+          <button class="faq__q" aria-expanded="false"><span>What types of projects does Samartha Gamana take on?</span><span class="faq__q-plus">+</span></button>
+          <div class="faq__a"><p>Townships, standalone residential and commercial buildings, road infrastructure, and raw land development — the six parcels described above. We take on full projects rather than isolated contracts within them.</p></div>
+        </div>
+        <div class="faq__item">
+          <button class="faq__q" aria-expanded="false"><span>How long does a typical township take from land to handover?</span><span class="faq__q-plus">+</span></button>
+          <div class="faq__a"><p>Most townships run three to five years from survey to first handover, depending on scale and approvals. We publish a phase-wise schedule before the first sale, and hold to it.</p></div>
+        </div>
+        <div class="faq__item">
+          <button class="faq__q" aria-expanded="false"><span>Do you handle approvals and regulatory clearances?</span><span class="faq__q-plus">+</span></button>
+          <div class="faq__a"><p>Yes — RERA registration, environmental clearances, and local municipal approvals are managed in-house as part of the design stage, not left for the buyer to chase later.</p></div>
+        </div>
+        <div class="faq__item">
+          <button class="faq__q" aria-expanded="false"><span>Can I visit an ongoing site before committing?</span><span class="faq__q-plus">+</span></button>
+          <div class="faq__a"><p>Always. We'd rather show you an active site with cranes and mud on it than a finished showflat — it's a better picture of how we actually build.</p></div>
+        </div>
+        <div class="faq__item">
+          <button class="faq__q" aria-expanded="false"><span>What documentation do I receive at handover?</span><span class="faq__q-plus">+</span></button>
+          <div class="faq__a"><p>Title documents, as-built drawings, warranty schedules for fittings and structure, and a maintenance handbook specific to your unit or building.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-recognition">
+    <div class="container">
+      <div class="recognition__row">
+        <span class="recognition__item">Karnataka RERA registered</span>
+        <span class="recognition__item">Featured — Builders' Quarterly</span>
+        <span class="recognition__item">Regional Infrastructure Award, 2025</span>
+        <span class="recognition__item">ET Realty 40 Under 40 — Design</span>
+        <span class="recognition__item">ISO 9001 certified execution</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-cta" class="chapter">
+    <div class="container">
+      <h2 class="cta__headline">Let's put your next parcel in motion.</h2>
+      <p class="cta__sub">Tell us where the land is. We'll tell you what it can become.</p>
+      <a class="btn-magnetic" id="cta-btn" href="mailto:connect@samarthagamana.in">Start a conversation →</a>
+      <div class="contact-grid">
+        <div class="contact-row"><span class="contact-row__label">Email</span><span class="contact-row__value">connect@samarthagamana.in</span></div>
+        <div class="contact-row"><span class="contact-row__label">Phone</span><span class="contact-row__value">+91 00000 00000</span></div>
+        <div class="contact-row"><span class="contact-row__label">Office</span><span class="contact-row__value">Bengaluru, Karnataka</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chapter-contact" class="chapter chapter--light">
+    <div class="container">
+      <div class="chapter-head">
+        <p class="eyebrow">Send us the brief</p>
+        <h2>Tell us about the parcel.</h2>
+      </div>
+      <div class="contact-form__grid">
+        <form class="contact-form" action="mailto:connect@samarthagamana.in" method="post" enctype="text/plain">
+          <div class="form-row">
+            <div class="form-field">
+              <label for="cf-name">Name</label>
+              <input id="cf-name" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div class="form-field">
+              <label for="cf-email">Email</label>
+              <input id="cf-email" name="email" type="email" autocomplete="email" required>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="cf-phone">Phone (optional)</label>
+            <input id="cf-phone" name="phone" type="tel" autocomplete="tel">
+          </div>
+          <div class="form-field">
+            <label for="cf-message">Tell us about the land or the project</label>
+            <textarea id="cf-message" name="message" required></textarea>
+          </div>
+          <button type="submit">Send brief →</button>
+          <p class="contact-form__note">We reply within two working days, always to a person, never a ticket number.</p>
+        </form>
+        <div class="contact-aside">
+          <div class="contact-aside__block">
+            <h4>Head Office</h4>
+            <p>Bengaluru, Karnataka</p>
+          </div>
+          <div class="contact-aside__block">
+            <h4>Email</h4>
+            <p>connect@samarthagamana.in</p>
+          </div>
+          <div class="contact-aside__block">
+            <h4>Phone</h4>
+            <p>+91 00000 00000</p>
+          </div>
+          <div class="contact-aside__block">
+            <h4>Site visits</h4>
+            <p>By appointment, Monday–Saturday.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="site-footer">
+  <div class="container footer__row">
+    <span class="footer__stamp">SG / Gamana — Est. Parcel 00 · © 2026 Samartha Gamana Infra Developers</span>
+    <div class="footer__links">
+      <a href="#chapter-parcels">Parcels</a>
+      <a href="#chapter-process">Process</a>
+      <a href="#chapter-leadership">Leadership</a>
+      <a href="#chapter-faq">FAQ</a>
+      <a href="#chapter-contact">Contact</a>
+    </div>
+    <button id="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var isCoarse = window.matchMedia('(pointer: coarse)').matches;
+var isSmall = window.innerWidth < 820;
+
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+/* ============================================================
+   ROUTE PROGRESS
+============================================================ */
+function initRoute(){
+  var marker = document.getElementById('route-marker');
+  if(!marker) return;
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if(ticking) return; ticking = true;
+    requestAnimationFrame(function(){
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var p = max > 0 ? window.scrollY / max : 0;
+      marker.style.top = (Math.min(Math.max(p,0),1)*100)+'%';
+      ticking = false;
+    });
+  }, {passive:true});
+}
+
+/* ============================================================
+   NAV
+============================================================ */
+function initNav(){
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, {passive:true});
+  var toggle = document.getElementById('nav-toggle');
+  var links = document.getElementById('nav-links');
+  toggle.addEventListener('click', function(){
+    toggle.classList.toggle('open');
+    links.classList.toggle('open');
+  });
+  links.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){ toggle.classList.remove('open'); links.classList.remove('open'); });
+  });
+}
+
+/* ============================================================
+   TEXT SPLIT + REVEAL
+============================================================ */
+function splitWords(el){
+  var words = el.textContent.trim().split(/\s+/);
+  el.innerHTML = words.map(function(w){
+    return '<span class="split-word"><span>'+w+'</span></span>';
+  }).join(' ');
+  return el.querySelectorAll('.split-word > span');
+}
+
+function initTextReveals(){
+  document.querySelectorAll('.chapter-head h2, .dev-panel__title, .process__title, .cta__headline').forEach(function(el){
+    var spans = splitWords(el);
+    gsap.fromTo(spans, {yPercent:115, opacity:0}, {
+      yPercent:0, opacity:1, duration:0.9, ease:'power3.out', stagger:0.045,
+      scrollTrigger:{ trigger: el, start:'top 88%' }
+    });
+  });
+  /* origin__title keeps its inline <em> markup, so it gets a plain reveal instead of word-splitting */
+  var originTitle = document.querySelector('.origin__title');
+  if(originTitle){
+    gsap.fromTo(originTitle, {opacity:0, y:26}, {
+      opacity:1, y:0, duration:0.9, ease:'power3.out',
+      scrollTrigger:{ trigger: originTitle, start:'top 88%' }
+    });
+  }
+}
+
+/* ============================================================
+   MAGNETIC + TILT
+============================================================ */
+function magnetic(el, strength){
+  strength = strength || 0.35;
+  if(isCoarse) return;
+  el.addEventListener('mousemove', function(e){
+    var r = el.getBoundingClientRect();
+    var relX = e.clientX - r.left - r.width/2;
+    var relY = e.clientY - r.top - r.height/2;
+    gsap.to(el, {x: relX*strength, y: relY*strength, duration:0.4, ease:'power2.out'});
+  });
+  el.addEventListener('mouseleave', function(){
+    gsap.to(el, {x:0, y:0, duration:0.7, ease:'elastic.out(1,0.4)'});
+  });
+}
+
+function tiltCard(el, max){
+  max = max || 7;
+  if(isCoarse) return;
+  el.addEventListener('mousemove', function(e){
+    var r = el.getBoundingClientRect();
+    var px = (e.clientX - r.left)/r.width - 0.5;
+    var py = (e.clientY - r.top)/r.height - 0.5;
+    gsap.to(el, {rotateX: -py*max, rotateY: px*max, transformPerspective:800, duration:0.5, ease:'power2.out'});
+  });
+  el.addEventListener('mouseleave', function(){
+    gsap.to(el, {rotateX:0, rotateY:0, duration:0.6, ease:'power3.out'});
+  });
+}
+
+function initInteractions(){
+  magnetic(document.getElementById('cta-btn'), 0.3);
+  magnetic(document.getElementById('back-to-top'), 0.4);
+  document.querySelectorAll('.parcel-card').forEach(function(el){ tiltCard(el, 6); });
+  document.getElementById('back-to-top').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior: reduceMotion ? 'auto' : 'smooth'});
+  });
+}
+
+/* ============================================================
+   COUNT UP + STAT LINE
+============================================================ */
+function initStats(){
+  document.querySelectorAll('.stat__num').forEach(function(el){
+    var target = parseFloat(el.dataset.count);
+    var suffix = el.dataset.suffix || '';
+    var obj = {val:0};
+    ScrollTrigger.create({
+      trigger: el, start:'top 85%', once:true,
+      onEnter: function(){
+        gsap.to(obj, {
+          val: target, duration:1.8, ease:'power2.out',
+          onUpdate: function(){ el.textContent = Math.floor(obj.val) + suffix; }
+        });
+      }
+    });
+  });
+  var path = document.getElementById('stats-path');
+  if(path){
+    var len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    gsap.to(path, {
+      strokeDashoffset:0, duration:1.6, ease:'power2.out',
+      scrollTrigger:{ trigger: path, start:'top 90%' }
+    });
+  }
+}
+
+/* ============================================================
+   PARCEL / DEV PANEL REVEALS
+============================================================ */
+function initSectionReveals(){
+  gsap.utils.toArray('.parcel-card').forEach(function(card, i){
+    gsap.fromTo(card, {opacity:0, y:36}, {
+      opacity:1, y:0, duration:0.8, ease:'power3.out', delay:(i%3)*0.06,
+      scrollTrigger:{ trigger: card, start:'top 92%' }
+    });
+  });
+  gsap.utils.toArray('.dev-panel__media').forEach(function(media, i){
+    var fromClip = i % 2 === 0 ? 'inset(0 100% 0 0)' : 'inset(0 0 0 100%)';
+    gsap.fromTo(media, {clipPath:fromClip}, {
+      clipPath:'inset(0 0% 0 0)', duration:1.1, ease:'power4.inOut',
+      scrollTrigger:{ trigger: media, start:'top 80%' }
+    });
+  });
+  gsap.utils.toArray('.process__step').forEach(function(step, i){
+    gsap.fromTo(step, {opacity:0, y:24}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out', delay:i*0.08,
+      scrollTrigger:{ trigger: step, start:'top 92%' }
+    });
+  });
+  gsap.utils.toArray('.approach__row').forEach(function(row){
+    gsap.fromTo(row, {opacity:0, y:20}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out',
+      scrollTrigger:{ trigger: row, start:'top 90%' }
+    });
+  });
+  gsap.utils.toArray('.sustain__item').forEach(function(item, i){
+    gsap.fromTo(item, {opacity:0, y:20}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out', delay:i*0.06,
+      scrollTrigger:{ trigger: item, start:'top 92%' }
+    });
+  });
+  gsap.utils.toArray('.testimonial-card').forEach(function(card, i){
+    gsap.fromTo(card, {opacity:0, y:26}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out', delay:(i%3)*0.08,
+      scrollTrigger:{ trigger: card, start:'top 92%' }
+    });
+  });
+  gsap.utils.toArray('.team-card').forEach(function(card, i){
+    gsap.fromTo(card, {opacity:0, y:26}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out', delay:(i%4)*0.06,
+      scrollTrigger:{ trigger: card, start:'top 92%' }
+    });
+  });
+  gsap.utils.toArray('.faq__item').forEach(function(item, i){
+    gsap.fromTo(item, {opacity:0, y:16}, {
+      opacity:1, y:0, duration:0.6, ease:'power3.out', delay:i*0.05,
+      scrollTrigger:{ trigger: item, start:'top 94%' }
+    });
+  });
+  var skylineChips = document.querySelectorAll('.skyline__chip');
+  if(skylineChips.length){
+    gsap.fromTo(skylineChips, {opacity:0, y:18}, {
+      opacity:1, y:0, duration:0.7, ease:'power3.out', stagger:0.1,
+      scrollTrigger:{ trigger:'.skyline__chips', start:'top 88%' }
+    });
+  }
+}
+
+/* ============================================================
+   FAQ ACCORDION
+============================================================ */
+function initFAQ(){
+  document.querySelectorAll('.faq__item').forEach(function(item){
+    var btn = item.querySelector('.faq__q');
+    var panel = item.querySelector('.faq__a');
+    btn.addEventListener('click', function(){
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq__item.open').forEach(function(openItem){
+        if(openItem !== item){
+          openItem.classList.remove('open');
+          openItem.querySelector('.faq__q').setAttribute('aria-expanded','false');
+          openItem.querySelector('.faq__a').style.maxHeight = null;
+        }
+      });
+      if(isOpen){
+        item.classList.remove('open');
+        btn.setAttribute('aria-expanded','false');
+        panel.style.maxHeight = null;
+      } else {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+      }
+    });
+  });
+}
+
+/* ============================================================
+   3D SCENE — procedural city
+============================================================ */
+var Scene3D = { ready:false };
+
+function initScene3D(){
+  if(typeof THREE === 'undefined'){ return; }
+  var canvas = document.getElementById('scene-canvas');
+  var renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isSmall ? 1.3 : 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0B0E13, 0.016);
+
+  var camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 500);
+  camera.position.set(0, 95, 6);
+  camera.lookAt(0,0,0);
+
+  var ambient = new THREE.AmbientLight(0x8899aa, 0.55);
+  scene.add(ambient);
+  var sun = new THREE.DirectionalLight(0xffe4bd, 0.9);
+  sun.position.set(30, 60, 20);
+  scene.add(sun);
+  var rim = new THREE.PointLight(0xb98f4b, 0.6, 200);
+  rim.position.set(-30, 20, -20);
+  scene.add(rim);
+
+  var grid = new THREE.GridHelper(220, 44, 0x6c93b8, 0x1c222c);
+  grid.material.opacity = 0.35;
+  grid.material.transparent = true;
+  scene.add(grid);
+
+  var groundGeo = new THREE.PlaneGeometry(240,240);
+  var groundMat = new THREE.MeshStandardMaterial({color:0x0d1119, roughness:1, metalness:0});
+  var ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.02;
+  scene.add(ground);
+
+  /* ---- buildings ---- */
+  var buildingColors = [0x1b212b, 0x232a36, 0x2c3444, 0x3a4356];
+
+  /* small canvas-baked window grid, used as both map + emissiveMap so facades
+     read as lit glass at dusk rather than flat colour blocks */
+  function makeWindowTexture(baseHex){
+    var c = document.createElement('canvas');
+    c.width = 48; c.height = 96;
+    var tctx = c.getContext('2d');
+    var base = '#' + ('000000'+baseHex.toString(16)).slice(-6);
+    tctx.fillStyle = base;
+    tctx.fillRect(0,0,48,96);
+    var cols = 4, rows = 9;
+    var cw = 48/cols, rh = 96/rows;
+    for(var r=0;r<rows;r++){
+      for(var cc=0; cc<cols; cc++){
+        var lit = Math.random() < 0.38;
+        tctx.fillStyle = lit ? 'rgba(224,180,114,0.95)' : 'rgba(6,8,11,0.6)';
+        tctx.fillRect(cc*cw + cw*0.16, r*rh + rh*0.2, cw*0.68, rh*0.6);
+      }
+    }
+    var tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, 3);
+    return tex;
+  }
+
+  var buildingGeo = new THREE.BoxGeometry(1,1,1);
+  buildingGeo.translate(0,0.5,0);
+  var gridSize = isSmall ? 9 : 12;
+  var spacing = 5.4;
+  var raw = [];
+  for(var ix=0; ix<gridSize; ix++){
+    for(var iz=0; iz<gridSize; iz++){
+      if(ix === Math.floor(gridSize/2) || iz === Math.floor(gridSize/2)) continue;
+      if(Math.random() < 0.22) continue;
+      var x = (ix-(gridSize-1)/2)*spacing + (Math.random()-0.5)*1.4;
+      var z = (iz-(gridSize-1)/2)*spacing + (Math.random()-0.5)*1.4;
+      raw.push({x:x, z:z, dist: Math.hypot(x,z)});
+    }
+  }
+  var allBuildings = raw.map(function(p){
+    var centerFactor = 1 - Math.min(p.dist/40, 1);
+    var height = 2 + Math.random()*4 + centerFactor*11 + (Math.random() < 0.1 ? 6 : 0);
+    return {
+      x:p.x, z:p.z, height:height,
+      w: 1.5 + Math.random()*1.3, d: 1.5 + Math.random()*1.3,
+      startT: Math.random()*0.55
+    };
+  });
+
+  /* the tallest few near the centre become glass landmark towers, built and
+     lit separately from the instanced blocks so they can catch the light */
+  var sortedByHeight = allBuildings.slice().sort(function(a,b){ return b.height - a.height; });
+  var landmarkSet = sortedByHeight.slice(0, isSmall ? 2 : 3);
+  landmarkSet.forEach(function(b){ b.isLandmark = true; });
+
+  var buildingData = allBuildings.filter(function(b){ return !b.isLandmark; });
+  buildingData.forEach(function(b, i){
+    b.groupIdx = i % buildingColors.length;
+    b.hasCap = b.height > 8.5 && Math.random() < 0.7;
+  });
+
+  var perGroup = buildingColors.map(function(){ return []; });
+  buildingData.forEach(function(b){ perGroup[b.groupIdx].push(b); });
+  var buildingGroups = buildingColors.map(function(color, gi){
+    var tex = makeWindowTexture(color);
+    var mat = new THREE.MeshStandardMaterial({
+      color:0xffffff, map:tex, emissive:0xb98f4b, emissiveMap:tex, emissiveIntensity:0.55,
+      roughness:0.6, metalness:0.2
+    });
+    var mesh = new THREE.InstancedMesh(buildingGeo, mat, perGroup[gi].length);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(mesh);
+    return {mesh:mesh, data:perGroup[gi]};
+  });
+
+  /* rooftop utility caps — a small block on the taller buildings so the
+     skyline reads with more silhouette detail up close */
+  var capCandidates = buildingData.filter(function(b){ return b.hasCap; });
+  var capGeo = new THREE.BoxGeometry(1,1,1);
+  capGeo.translate(0,0.5,0);
+  var capMat = new THREE.MeshStandardMaterial({color:0x11151c, roughness:0.75, metalness:0.3});
+  var capMesh = new THREE.InstancedMesh(capGeo, capMat, Math.max(capCandidates.length,1));
+  capMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(capMesh);
+
+  /* landmark glass towers + brass spires — the signature beauty pass */
+  var landmarkMeshes = landmarkSet.map(function(b){
+    var geo = new THREE.BoxGeometry(b.w*0.86, 1, b.d*0.86);
+    geo.translate(0,0.5,0);
+    var mat = new THREE.MeshStandardMaterial({
+      color:0x9fc2dd, roughness:0.1, metalness:0.7,
+      emissive:0x6c93b8, emissiveIntensity:0.4, transparent:true, opacity:0.94
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(b.x, 0, b.z);
+    mesh.scale.y = 0.001;
+    scene.add(mesh);
+    var spireGeo = new THREE.CylinderGeometry(0.035,0.06,1,6);
+    var spireMat = new THREE.MeshStandardMaterial({color:0xe0b472, emissive:0xe0b472, emissiveIntensity:0.9, roughness:0.3});
+    var spire = new THREE.Mesh(spireGeo, spireMat);
+    spire.position.set(b.x, 0, b.z);
+    spire.scale.y = 0.001;
+    scene.add(spire);
+    return {building:mesh, spire:spire, data:b};
+  });
+
+  var dummy = new THREE.Object3D();
+  function easeOutBack(t){ var c1=1.4, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); }
+  function updateBuildings(globalT){
+    buildingGroups.forEach(function(g){
+      g.data.forEach(function(b, i){
+        var t = (globalT - b.startT) / (1 - b.startT);
+        t = Math.min(Math.max(t,0),1);
+        var eased = easeOutBack(t);
+        dummy.position.set(b.x, 0, b.z);
+        dummy.scale.set(b.w, Math.max(eased*b.height, 0.001), b.d);
+        dummy.updateMatrix();
+        g.mesh.setMatrixAt(i, dummy.matrix);
+      });
+      g.mesh.instanceMatrix.needsUpdate = true;
+    });
+
+    var capIdx = 0;
+    capCandidates.forEach(function(b){
+      var t = (globalT - b.startT) / (1 - b.startT);
+      t = Math.min(Math.max(t,0),1);
+      var eased = easeOutBack(t);
+      var h = Math.max(eased*b.height, 0.001);
+      dummy.position.set(b.x, h, b.z);
+      dummy.scale.set(Math.max(b.w*0.4,0.001), Math.max(t*0.9,0.001), Math.max(b.d*0.4,0.001));
+      dummy.updateMatrix();
+      capMesh.setMatrixAt(capIdx, dummy.matrix);
+      capIdx++;
+    });
+    capMesh.instanceMatrix.needsUpdate = true;
+
+    landmarkMeshes.forEach(function(lm){
+      var b = lm.data;
+      var t = (globalT - b.startT) / (1 - b.startT);
+      t = Math.min(Math.max(t,0),1);
+      var eased = easeOutBack(t);
+      var h = Math.max(eased*b.height, 0.001);
+      lm.building.scale.y = h;
+      lm.spire.position.y = h;
+      lm.spire.scale.y = Math.max(t*2.4, 0.001);
+    });
+  }
+  updateBuildings(0);
+
+  /* ---- roads ---- */
+  var roadMeshes = [];
+  function makeRoad(w,d,x,z){
+    var geo = new THREE.BoxGeometry(w,0.06,d);
+    var mat = new THREE.MeshBasicMaterial({color:0xb98f4b, transparent:true, opacity:0.85});
+    var m = new THREE.Mesh(geo, mat);
+    m.position.set(x,0.03,z);
+    m.scale.set(0.001,1,1);
+    scene.add(m);
+    roadMeshes.push(m);
+    return m;
+  }
+  makeRoad(220, 2.4, 0, 0);
+  makeRoad(2.4, 220, 0, 0);
+  makeRoad(160, 1.6, 0, 26);
+  makeRoad(160, 1.6, 0, -26);
+
+  /* ---- trees ---- */
+  var treeCount = isSmall ? 18 : 32;
+  var trunkGeo = new THREE.CylinderGeometry(0.1,0.12,1,6);
+  var canopyGeo = new THREE.ConeGeometry(0.7,1.6,6);
+  var trunkMesh = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({color:0x3a2f22}), treeCount);
+  var canopyMesh = new THREE.InstancedMesh(canopyGeo, new THREE.MeshStandardMaterial({color:0x5c7a5e}), treeCount);
+  var treePositions = [];
+  for(var t=0;t<treeCount;t++){
+    var side = Math.random()<0.5?1:-1;
+    var tx = (Math.random()-0.5)*180;
+    var tz = side*(28 + Math.random()*4);
+    treePositions.push({x:tx, z:tz});
+    var d1 = new THREE.Object3D(); d1.position.set(tx,0.5,tz); d1.updateMatrix();
+    trunkMesh.setMatrixAt(t, d1.matrix);
+    var d2 = new THREE.Object3D(); d2.position.set(tx,1.5,tz); d2.updateMatrix();
+    canopyMesh.setMatrixAt(t, d2.matrix);
+  }
+  trunkMesh.scale.set(0,0,0);
+  canopyMesh.scale.set(0,0,0);
+  scene.add(trunkMesh, canopyMesh);
+
+  /* ---- ambient particles ---- */
+  var particleCount = isSmall ? 200 : 420;
+  var particleGeo = new THREE.BufferGeometry();
+  var positions = new Float32Array(particleCount*3);
+  for(var p=0;p<particleCount;p++){
+    positions[p*3] = (Math.random()-0.5)*140;
+    positions[p*3+1] = Math.random()*30 + 2;
+    positions[p*3+2] = (Math.random()-0.5)*140;
+  }
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  var particleMat = new THREE.PointsMaterial({color:0xe0b472, size:0.18, transparent:true, opacity:0.5});
+  var particles = new THREE.Points(particleGeo, particleMat);
+  scene.add(particles);
+
+  /* ---- resize ---- */
+  window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ---- render loop with visibility gating ---- */
+  var active = true;
+  var clock = new THREE.Clock();
+  function frame(){
+    if(!active) return;
+    requestAnimationFrame(frame);
+    var dt = clock.getDelta();
+    particles.rotation.y += dt*0.01;
+    renderer.render(scene, camera);
+  }
+  frame();
+
+  var wrapper = document.getElementById('hero');
+  var originEl = document.getElementById('chapter-origin');
+  var skylineEl = document.getElementById('chapter-skyline');
+  function checkVisible(){
+    var r1 = wrapper.getBoundingClientRect();
+    var r2 = originEl.getBoundingClientRect();
+    var r3 = skylineEl ? skylineEl.getBoundingClientRect() : null;
+    var visible = (r1.bottom > 0 && r1.top < innerHeight) || (r2.bottom > 0 && r2.top < innerHeight) || (r3 && r3.bottom > 0 && r3.top < innerHeight);
+    if(visible && !active){ active = true; frame(); }
+    if(!visible && active){ active = false; }
+  }
+  window.addEventListener('scroll', checkVisible, {passive:true});
+
+  Scene3D = {
+    ready:true, camera:camera, updateBuildings:updateBuildings,
+    roadMeshes:roadMeshes, trunkMesh:trunkMesh, canopyMesh:canopyMesh
+  };
+}
+
+function playCityIntro(){
+  if(!Scene3D.ready){ return; }
+  var camera = Scene3D.camera;
+  var camState = {x:0,y:95,z:6};
+  var cityState = {p:0};
+
+  gsap.to(cityState, {
+    p:1, duration: reduceMotion ? 0.6 : 2.6, ease:'power2.out',
+    onUpdate: function(){ Scene3D.updateBuildings(cityState.p); }
+  });
+
+  gsap.to(Scene3D.roadMeshes.map(function(m){return m.scale;}), {
+    x:1, duration:1.2, delay: reduceMotion ? 0 : 1.5, ease:'power3.out', stagger:0.12
+  });
+
+  gsap.to([Scene3D.trunkMesh.scale, Scene3D.canopyMesh.scale], {
+    x:1, y:1, z:1, duration:0.9, delay: reduceMotion ? 0 : 1.9, ease:'back.out(2)'
+  });
+
+  gsap.to(camState, {
+    y:15, z:34, x:2, duration: reduceMotion ? 0.6 : 2.8, ease:'power3.inOut', delay:0.1,
+    onUpdate: function(){
+      camera.position.set(camState.x, camState.y, camState.z);
+      camera.lookAt(0,2,0);
+    },
+    onComplete: initScrollCamera
+  });
+}
+
+function initScrollCamera(){
+  if(!Scene3D.ready || typeof ScrollTrigger === 'undefined') return;
+  var camera = Scene3D.camera;
+  ScrollTrigger.create({
+    trigger:'#chapter-origin', start:'top bottom', end:'bottom top', scrub:1,
+    onUpdate:function(self){
+      var p = self.progress;
+      var angle = p*Math.PI*0.55;
+      var radius = 34 + p*8;
+      camera.position.x = Math.sin(angle)*radius;
+      camera.position.z = Math.cos(angle)*radius;
+      camera.position.y = 15 + p*9;
+      camera.lookAt(0,2,0);
+    }
+  });
+  if(document.getElementById('chapter-skyline')){
+    ScrollTrigger.create({
+      trigger:'#chapter-skyline', start:'top bottom', end:'bottom top', scrub:1,
+      onUpdate:function(self){
+        var p = self.progress;
+        var angle = Math.PI*0.55 + p*Math.PI*0.75;
+        var radius = 42 - p*20;
+        camera.position.x = Math.sin(angle)*radius;
+        camera.position.z = Math.cos(angle)*radius;
+        camera.position.y = 24 - p*15;
+        camera.lookAt(0, 3 + p*4, 0);
+      }
+    });
+  }
+}
+
+/* ============================================================
+   INTRO PARTICLE-TEXT LOADER
+============================================================ */
+function initIntroCanvas(){
+  var canvas = document.getElementById('intro-canvas');
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio, 2);
+  var W, H;
+  function resize(){
+    W = canvas.width = innerWidth*dpr;
+    H = canvas.height = innerHeight*dpr;
+    canvas.style.width = innerWidth+'px';
+    canvas.style.height = innerHeight+'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var POOL = isSmall ? 700 : 1600;
+  var particles = [];
+  for(var i=0;i<POOL;i++){
+    particles.push({
+      x: Math.random()*W, y: Math.random()*H,
+      tx: Math.random()*W, ty: Math.random()*H,
+      r: Math.random()*1.5+0.6,
+      brass: Math.random() < 0.45
+    });
+  }
+
+  function sampleText(text, size){
+    var off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    var octx = off.getContext('2d');
+    octx.fillStyle = '#fff';
+    octx.textAlign = 'center'; octx.textBaseline = 'middle';
+    octx.font = '800 '+size+'px "Big Shoulders Display", sans-serif';
+    octx.fillText(text, W/2, H/2);
+    var step = isSmall ? 7 : 9;
+    var data = octx.getImageData(0,0,W,H).data;
+    var pts = [];
+    for(var y=0;y<H;y+=step){
+      for(var x=0;x<W;x+=step){
+        if(data[(y*W+x)*4+3] > 140) pts.push({x:x,y:y});
+      }
+    }
+    for(var j=pts.length-1;j>0;j--){
+      var k = (Math.random()*(j+1))|0;
+      var tmp = pts[j]; pts[j]=pts[k]; pts[k]=tmp;
+    }
+    return pts;
+  }
+
+  function assignTargets(pts){
+    for(var i=0;i<particles.length;i++){
+      if(pts[i]){
+        particles[i].tx = pts[i].x; particles[i].ty = pts[i].y;
+      } else {
+        particles[i].tx = W/2 + (Math.random()-0.5)*W*1.5;
+        particles[i].ty = H/2 + (Math.random()-0.5)*H*1.5;
+      }
+    }
+  }
+
+  var running = true;
+  function loop(){
+    if(!running) return;
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<particles.length;i++){
+      var pt = particles[i];
+      pt.x += (pt.tx - pt.x)*0.07;
+      pt.y += (pt.ty - pt.y)*0.07;
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = pt.brass ? '#C9A176' : '#EDEAE1';
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.r*dpr, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  return {
+    sampleText: sampleText,
+    assignTargets: assignTargets,
+    stop: function(){ running = false; }
+  };
+}
+
+function fontSizeFor(text){
+  var base = Math.min(innerWidth*0.17, 230);
+  return text.length > 7 ? base*0.82 : base;
+}
+
+var introDone = false;
+function finishIntro(introCtrl){
+  if(introDone) return;
+  introDone = true;
+  var loader = document.getElementById('loader');
+  document.body.classList.remove('loading');
+  gsap.to(loader, {
+    opacity:0, duration:0.9, ease:'power2.out',
+    onComplete:function(){
+      loader.style.display = 'none';
+      if(introCtrl) introCtrl.stop();
+    }
+  });
+  revealHero();
+  playCityIntro();
+}
+
+function revealHero(){
+  var eyebrow = document.querySelector('.hero__eyebrow') || document.querySelector('#hero .eyebrow');
+  var tl = gsap.timeline({delay:0.15});
+  tl.fromTo('#hero .eyebrow', {opacity:0, y:14}, {opacity:1, y:0, duration:0.7, ease:'power3.out'})
+    .fromTo('.hero__title .line-small', {opacity:0, y:14}, {opacity:1, y:0, duration:0.6, ease:'power3.out'}, '-=0.4')
+    .fromTo('.hero__title .line-big', {opacity:0, y:40}, {opacity:1, y:0, duration:1, ease:'power4.out'}, '-=0.35')
+    .fromTo('.hero__sub', {opacity:0, y:14}, {opacity:1, y:0, duration:0.7, ease:'power3.out'}, '-=0.5')
+    .fromTo('.hero__scroll', {opacity:0}, {opacity:1, duration:0.6}, '-=0.3');
+}
+
+function setLoaderProgress(pct, caption){
+  var fill = document.getElementById('loader-bar-fill');
+  var pctEl = document.getElementById('loader-progress');
+  var capEl = document.getElementById('loader-caption-text');
+  if(fill) fill.style.width = pct+'%';
+  if(pctEl) pctEl.textContent = Math.round(pct)+'%';
+  if(capEl && caption) capEl.textContent = caption;
+}
+
+async function runIntroSequence(){
+  var skipBtn = document.getElementById('skip-intro');
+  var skipped = false;
+  var introCtrl = null;
+  /* Hard ceiling: whatever else happens (slow fonts, a stalled tween),
+     the loader always resolves on its own — never depends on pointer input. */
+  var safety = setTimeout(function(){ finishIntro(introCtrl); }, 6500);
+
+  if(reduceMotion){
+    clearTimeout(safety);
+    finishIntro(null);
+    return;
+  }
+
+  introCtrl = initIntroCanvas();
+  setLoaderProgress(4, 'Calibrating coordinates');
+  setTimeout(function(){ skipBtn.classList.add('show'); }, 1100);
+  skipBtn.addEventListener('click', function(){
+    skipped = true;
+    clearTimeout(safety);
+    finishIntro(introCtrl);
+  });
+
+  try {
+    if(document.fonts && document.fonts.load){
+      await document.fonts.load('800 220px "Big Shoulders Display"');
+    }
+  } catch(e){}
+
+  setLoaderProgress(18, 'Calibrating coordinates');
+  await wait(500);
+  if(skipped) return;
+  setLoaderProgress(38, 'Plotting parcel — Samartha');
+  introCtrl.assignTargets(introCtrl.sampleText('SAMARTHA', fontSizeFor('SAMARTHA')));
+
+  await wait(650);
+  if(skipped) return;
+  setLoaderProgress(62, 'Plotting parcel — Samartha');
+
+  await wait(600);
+  if(skipped) return;
+  setLoaderProgress(80, 'Plotting parcel — Gamana');
+  introCtrl.assignTargets(introCtrl.sampleText('GAMANA', fontSizeFor('GAMANA')*1.05));
+
+  await wait(650);
+  if(skipped) return;
+  setLoaderProgress(97, 'Plotting parcel — Gamana');
+
+  await wait(600);
+  if(skipped) return;
+  clearTimeout(safety);
+  setLoaderProgress(100, 'Arriving on site');
+  await wait(200);
+  finishIntro(introCtrl);
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+document.addEventListener('DOMContentLoaded', function(){
+  initRoute();
+  initNav();
+  initInteractions();
+
+  if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined'){
+    gsap.registerPlugin(ScrollTrigger);
+    initTextReveals();
+    initStats();
+    initSectionReveals();
+  }
+
+  try { initScene3D(); } catch(e){ console.warn('3D scene unavailable', e); }
+
+  if(typeof gsap === 'undefined'){
+    document.body.classList.remove('loading');
+    document.getElementById('loader').style.display = 'none';
+  } else {
+    runIntroSequence();
+  }
+});
+})();
+</script>
+</body>
+</html>
